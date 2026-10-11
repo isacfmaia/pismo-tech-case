@@ -25,6 +25,7 @@ A small REST API for creating accounts and recording financial transactions.
 Code is grouped by feature (`account` and `transaction`). The small `shared` package contains only cross-cutting error handling and clock configuration.
 
 ```mermaid
+    flowchart LR
     HTTP --> Controller --> Service --> Repository --> PostgreSQL
 ```
 

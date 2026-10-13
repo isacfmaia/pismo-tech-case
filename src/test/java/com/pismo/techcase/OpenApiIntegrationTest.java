@@ -27,6 +27,7 @@ class OpenApiIntegrationTest extends PostgreSqlIntegrationTest {
             .andExpect(jsonPath("$.components.schemas.TransactionResponse.properties.transaction_id").exists())
             .andExpect(jsonPath("$.components.schemas.TransactionResponse.properties.account_id").exists())
             .andExpect(jsonPath("$.components.schemas.TransactionResponse.properties.operation_type_id").exists())
+            .andExpect(jsonPath("$.components.schemas.TransactionResponse.properties.balance").exists())
             .andExpect(jsonPath("$.components.schemas.TransactionResponse.properties.event_date").exists())
             .andExpect(jsonPath("$.components.schemas.AccountResponse.properties.accountId").doesNotExist())
             .andExpect(jsonPath("$.components.schemas.AccountResponse.properties.documentNumber").doesNotExist())

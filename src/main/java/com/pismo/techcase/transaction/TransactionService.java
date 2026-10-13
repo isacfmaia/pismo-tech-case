@@ -6,6 +6,7 @@ import com.pismo.techcase.shared.exception.AccountNotFoundException;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,24 @@ public class TransactionService {
             Instant.now(clock)
         );
 
+        if (operationType.isCredit()) {
+            dischargeOutstandingDebits(transaction);
+        }
+
         return transactionRepository.save(transaction);
+    }
+
+    private void dischargeOutstandingDebits(Transaction credit) {
+        List<Transaction> outstandingDebits = transactionRepository.findOutstandingDebitsForUpdate(
+            credit.getAccount().getId()
+        );
+
+        for (Transaction debit : outstandingDebits) {
+            if (!credit.hasAvailableBalance()) {
+                break;
+            }
+
+            credit.discharge(debit);
+        }
     }
 }

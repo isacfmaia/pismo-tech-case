@@ -10,6 +10,7 @@ public record TransactionResponse(
     @JsonProperty("account_id") long accountId,
     @JsonProperty("operation_type_id") int operationTypeId,
     BigDecimal amount,
+    BigDecimal balance,
     @JsonProperty("event_date") Instant eventDate
 ) {
 
@@ -19,6 +20,7 @@ public record TransactionResponse(
             transaction.getAccount().getId(),
             transaction.getOperationType().getId(),
             transaction.getAmount(),
+            transaction.getBalance(),
             transaction.getEventDate()
         );
     }

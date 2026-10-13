@@ -46,6 +46,12 @@ Code is grouped by feature (`account` and `transaction`). The small `shared` pac
 
 The API accepts a positive magnitude only. The domain applies the correct sign from `OperationType`; clients cannot submit pre-signed amounts.
 
+Every transaction starts with `balance` equal to its signed `amount`. The `amount` remains the immutable original value, while `balance` represents the value still available or outstanding.
+
+Creating a credit voucher discharges outstanding debits from the same account, oldest first. A discharge can be total or partial. Creating a debit does not consume a credit balance left by an earlier transaction.
+
+The credit and all affected debits are updated in one database transaction. Outstanding debit rows are pessimistically locked while the discharge runs so concurrent credits cannot consume the same balance.
+
 ## Running the Application
 
 Requirements: Docker with Docker Compose.
@@ -92,7 +98,7 @@ On Windows PowerShell:
 .\mvnw.cmd clean test
 ```
 
-The pure `OperationTypeTest` covers each debit/credit sign rule without mocks. The API integration tests cover account creation and lookup, duplicate and invalid accounts, transaction creation, missing accounts, invalid operation types, and non-positive amounts.
+Pure unit tests cover debit/credit signs and discharge calculations without mocks. The API integration tests also cover FIFO discharge, partial payments, remaining credit, account isolation, Flyway migrations, and the rule that debits do not trigger discharge.
 
 ## API
 
@@ -129,7 +135,18 @@ curl -i -X POST http://localhost:8080/transactions \
   -d '{"account_id":1,"operation_type_id":1,"amount":100.00}'
 ```
 
-Returns `201 Created`. For this debit example, the response and database contain `"amount": -100.00`.
+Returns `201 Created`. For this debit example, the response and database contain:
+
+```json
+{
+  "transaction_id": 1,
+  "account_id": 1,
+  "operation_type_id": 1,
+  "amount": -100.00,
+  "balance": -100.00,
+  "event_date": "2026-10-13T12:00:00Z"
+}
+```
 
 Interactive documentation is available at `http://localhost:8080/swagger-ui.html`; the OpenAPI document is at `http://localhost:8080/v3/api-docs`.
 
@@ -159,5 +176,6 @@ Flyway applies the schema before JPA validates it:
 
 1. `V1__create_tables.sql` creates `accounts`, `operation_types`, and `transactions`, including unique, foreign-key, not-null, and non-zero constraints.
 2. `V2__seed_operation_types.sql` inserts the four operation types required by the case.
+3. `V3__add_transaction_balance.sql` adds and backfills `balance`, then enforces valid debit and credit balance ranges.
 
 Hibernate is configured with `ddl-auto=validate`; it never creates or changes the schema.

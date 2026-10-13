@@ -23,6 +23,10 @@ public enum OperationType {
         return id;
     }
 
+    public boolean isCredit() {
+        return balanceEffect == BalanceEffect.CREDIT;
+    }
+
     public BigDecimal applySign(BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
             throw new InvalidTransactionAmountException();

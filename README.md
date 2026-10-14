@@ -2,13 +2,20 @@
 
 ## Overview
 
-A small REST API for creating accounts and recording financial transactions.
+A small REST API for creating accounts, recording financial transactions, and discharging credit payments against previous debits.
 
-### Tech case requirements
+### Original tech case requirements
 
 - Create an account with `POST /accounts`.
 - Retrieve an account with `GET /accounts/{accountId}`.
 - Create an account transaction with `POST /transactions`.
+
+### Pair-programming extension
+
+- Preserve `amount` as the original transaction value and maintain the current value in `balance`.
+- When a credit voucher is created, discharge previous outstanding debits from the same account, oldest first.
+- Allow total or partial discharge and keep any unused credit in the credit transaction's `balance`.
+- Do not use an existing credit balance when a new debit is created; only a new credit triggers discharge.
 
 ## Tech Stack
 
@@ -148,6 +155,8 @@ Returns `201 Created`. For this debit example, the response and database contain
 }
 ```
 
+For a credit voucher, `balance` contains the credit left after automatically discharging previous debits from the same account.
+
 Interactive documentation is available at `http://localhost:8080/swagger-ui.html`; the OpenAPI document is at `http://localhost:8080/v3/api-docs`.
 
 ## Error Responses
@@ -176,6 +185,6 @@ Flyway applies the schema before JPA validates it:
 
 1. `V1__create_tables.sql` creates `accounts`, `operation_types`, and `transactions`, including unique, foreign-key, not-null, and non-zero constraints.
 2. `V2__seed_operation_types.sql` inserts the four operation types required by the case.
-3. `V3__add_transaction_balance.sql` adds and backfills `balance`, then enforces valid debit and credit balance ranges.
+3. `V3__add_transaction_balance.sql` adds `balance`, initializes existing rows with `balance = amount`, makes the column mandatory, and enforces `amount <= balance <= 0` for debits and `0 <= balance <= amount` for credits.
 
-Hibernate is configured with `ddl-auto=validate`; it never creates or changes the schema.
+Existing migrations are never edited. Hibernate is configured with `ddl-auto=validate`; Flyway changes the schema and Hibernate only verifies that it matches the JPA model.
